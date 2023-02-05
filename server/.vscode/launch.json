@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'example'",
+            "name": "serve",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=example",
-                    "--package=example"
+                    "--bin=serve",
+                    "--package=serve"
                 ],
                 "filter": {
-                    "name": "example",
+                    "name": "serve",
                     "kind": "bin"
                 }
             },
