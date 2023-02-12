@@ -8,7 +8,7 @@ use com::response::{Response, self};
 
 pub fn listen<F>(mut cbk: F) -> ()
 where
-    F: FnMut(Packet, SocketAddr) -> (),
+    F: FnMut(Packet, SocketAddr) -> Option<Response>,
 {
     let listener = TcpListener::bind("127.0.0.1:8080").expect("failed listen");
     let mut handlers: Vec<JoinHandle<(TcpStream, SocketAddr)>> = vec![
@@ -37,9 +37,19 @@ where
                     }
                 };
 
-                let resp = Response {
-                    header: response::Header {},
-                    content: "succeeded".into(),
+                log::trace!("{:?}", buf);
+
+                let packet = match packet::parse(buf) {
+                    Ok(packet) => cbk(packet, address),
+                    Err(_) => None
+                };
+
+                let resp = match packet {
+                    Some(resp) => resp,
+                    None => Response {
+                        header: response::Header {},
+                        content: "".into(),
+                    }
                 };
                 let resp = serde_json::to_vec(&resp).expect("failed parse response");
                 if let Err(err) = stream.write(&resp) {
@@ -52,11 +62,6 @@ where
 
                 log::trace!("disconnected : {:?}", address);
 
-                log::trace!("{:?}", buf);
-
-                if let Ok(packet) = packet::parse(buf) {
-                    cbk(packet, address);
-                }
             } else {
                 notyet.push(handler);
             }

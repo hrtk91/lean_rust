@@ -1,5 +1,6 @@
 use com::packet::Packet;
 use com::request::Request;
+use com::response;
 use std::net::SocketAddr;
 
 mod tcp_server;
@@ -57,6 +58,10 @@ fn main() {
     let mut app = App { requests: vec![] };
     tcp_server::listen(move |packet: Packet, address: SocketAddr| {
 
-        app.handle_receive(packet, address)
+        app.handle_receive(packet, address);
+        Some(response::Response {
+            header: response::Header{},
+            content: "succeeded".into()
+        })
     });
 }
