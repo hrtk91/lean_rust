@@ -1,15 +1,25 @@
 {
 	"folders": [
 		{
+			"name": "client",
+			"path": "./client"
+		},
+		{
+			"name": "server",
+			"path": "./server"
+		},
+		{
+			"name": "com",
+			"path": "./com"
+		},
+		{
 			"path": "."
 		}
 	],
 	"settings": {},
 	"launch": {
 		"version": "0.2.0",
-		"configurations": [
-			
-		],
+		"configurations": [],
 		"compounds": [
 			{
 				"name": "Compound",
