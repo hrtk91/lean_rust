@@ -5,7 +5,28 @@
 		},
 		{
 			"path": "client"
+		},
+		{
+			"path": "packet"
+		},
+		{
+			"path": "request"
+		},
+		{
+			"path": "response"
 		}
 	],
-	"settings": {}
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			
+		],
+		"compounds": [
+			{
+				"name": "Compound",
+				"configurations": []
+			}
+		]
+	}
 }

@@ -1,17 +1,21 @@
-use std::io::Read;
+use packet::Packet;
+use response::Response;
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
-fn handle_stream(stream: &mut TcpStream) -> [u8; 1024] {
-    // stream.set_read_timeout(Some(Duration::new(1, 0))).expect("failed set timeout");
+fn read_stream(stream: &mut TcpStream) -> Result<Vec<u8>, &str> {
+    let mut received: Vec<u8> = vec![];
     let mut buf: [u8; 1024] = [0; 1024];
-    while stream.read(&mut buf).expect("failed unwrap stream value") > 0 {
-        if buf.len() >= 1023 {
-            return buf;
-        }
-    }
 
-    buf
+    if let Ok(size) = stream.read(&mut buf) {
+        let ret = buf[0..size].to_vec();
+        log::trace!("received: {:?}", ret);
+        Ok(ret)
+    } else {
+        Err("failed recieved")
+    }
 }
 
 fn accept(listener: TcpListener) -> JoinHandle<(TcpStream, SocketAddr)> {
@@ -24,9 +28,9 @@ fn accept(listener: TcpListener) -> JoinHandle<(TcpStream, SocketAddr)> {
     })
 }
 
-pub fn listen<F>(cbk: F) -> ()
+pub fn listen<F>(mut cbk: F) -> ()
 where
-    F: Fn([u8; 1024], SocketAddr) -> (),
+    F: FnMut(Packet, SocketAddr) -> (),
 {
     let listener = TcpListener::bind("127.0.0.1:8080").expect("failed listen");
     let mut handlers: Vec<JoinHandle<(TcpStream, SocketAddr)>> = vec![
@@ -37,21 +41,44 @@ where
 
     loop {
         let mut notyet: Vec<JoinHandle<(TcpStream, SocketAddr)>> = vec![];
-        //
         while let Some(handler) = handlers.pop() {
             if handler.is_finished() {
                 let (mut stream, address) = handler.join().expect("failed join handler");
 
-                log::info!("Accepted: {:?}", address);
+                log::trace!("Accepted: {:?}", address);
 
-                let buf = handle_stream(&mut stream);
                 stream
-                    .shutdown(std::net::Shutdown::Both)
-                    .expect("failed shutdown");
+                    .set_read_timeout(Some(Duration::from_millis(1000)))
+                    .unwrap();
 
-                log::info!("disconnected : {:?}", address);
+                let buf = match read_stream(&mut stream) {
+                    Ok(size) => size,
+                    Err(err) => {
+                        log::trace!("failed read stream {:?}", err);
+                        continue;
+                    }
+                };
 
-                cbk(buf, address);
+                let resp = Response {
+                    header: response::Header {},
+                    content: "succeeded".into(),
+                };
+                let resp = serde_json::to_vec(&resp).expect("failed parse response");
+                if let Err(err) = stream.write(&resp) {
+                    log::warn!("failed wirte {:?}", err);
+                };
+
+                if let Err(err) = stream.shutdown(std::net::Shutdown::Both) {
+                    log::debug!("failed shutdown {:?}", err);
+                }
+
+                log::trace!("disconnected : {:?}", address);
+
+                log::trace!("{:?}", buf);
+
+                if let Ok(packet) = packet::parse(buf) {
+                    cbk(packet, address);
+                }
             } else {
                 notyet.push(handler);
             }

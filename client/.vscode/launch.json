@@ -22,7 +22,7 @@
             "args": ["-h", "127.0.0.1", "-p", "8080"],
             "cwd": "${workspaceFolder}",
             "env": {
-                "RUST_LOG": "trace"
+                "RUST_LOG": "debug"
             }
         },
         {
