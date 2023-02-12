@@ -1,6 +1,6 @@
 use com::packet::Packet;
 use com::request::Request;
-use com::response;
+use com::response::{self, Response};
 use std::net::SocketAddr;
 
 mod tcp_server;
@@ -10,45 +10,52 @@ pub struct App {
 }
 
 impl App {
-    pub fn handle_receive(&mut self, packet: Packet, address: SocketAddr) {
+    pub fn handle_receive(&mut self, packet: Packet, address: SocketAddr) -> Option<Response> {
         log::trace!("{:?}", packet);
 
         let req: Request = match serde_json::from_slice(packet.payload.as_slice()) {
             Ok(req) => req,
             Err(err) => {
                 log::warn!("failed parse payload {:?} : {:?}", address, err);
-                return;
+                return None;
             }
         };
 
         match req.header.path.as_str() {
             "/post" => {
                 let content = req.content;
-                self.post(address, &content);
+                self.post(address, &content)
             }
             "/get" => {
-                self.get(address);
+                self.get(address)
             }
-            _ => (),
+            _ => None,
         }
     }
 
-    fn post(&mut self, address: SocketAddr, value: &str) {
+    fn post(&mut self, address: SocketAddr, value: &str) -> Option<Response> {
         log::info!("[{:?}] : {:?}", address, value);
 
         if self.requests.len() > 50 {
             self.requests.pop();
         }
 
-        self.requests.push((address, value.into()))
+        self.requests.push((address, value.into()));
+
+        self.get(address)
     }
 
-    fn get(&mut self, address: SocketAddr) {
+    fn get(&mut self, address: SocketAddr) -> Option<Response> {
         log::trace!("[{:?}]", address);
 
         let mut requests = self.requests.clone();
         requests.reverse();
-        let content = requests.iter().map(|x| format!("{}:{}", x.0.to_string(), x.1)).collect::<String>();
+        let content = requests.iter().map(|x| format!("{}:{}", x.0.to_string(), x.1)).collect::<Vec<String>>();
+
+        Some(response::Response {
+            header: response::Header{},
+            content: content.join("\n")
+        })
     }
 }
 
@@ -58,10 +65,6 @@ fn main() {
     let mut app = App { requests: vec![] };
     tcp_server::listen(move |packet: Packet, address: SocketAddr| {
 
-        app.handle_receive(packet, address);
-        Some(response::Response {
-            header: response::Header{},
-            content: "succeeded".into()
-        })
+        app.handle_receive(packet, address)
     });
 }
