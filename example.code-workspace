@@ -1,19 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "server"
-		},
-		{
-			"path": "client"
-		},
-		{
-			"path": "packet"
-		},
-		{
-			"path": "request"
-		},
-		{
-			"path": "response"
+			"path": "."
 		}
 	],
 	"settings": {},

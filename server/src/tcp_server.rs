@@ -1,32 +1,10 @@
-use packet::Packet;
-use response::Response;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-fn read_stream(stream: &mut TcpStream) -> Result<Vec<u8>, &str> {
-    let mut received: Vec<u8> = vec![];
-    let mut buf: [u8; 1024] = [0; 1024];
-
-    if let Ok(size) = stream.read(&mut buf) {
-        let ret = buf[0..size].to_vec();
-        log::trace!("received: {:?}", ret);
-        Ok(ret)
-    } else {
-        Err("failed recieved")
-    }
-}
-
-fn accept(listener: TcpListener) -> JoinHandle<(TcpStream, SocketAddr)> {
-    thread::spawn(move || match listener.accept() {
-        Ok((stream, address)) => (stream, address),
-        Err(err) => {
-            log::error!("listen error: {:?}", err);
-            panic!();
-        }
-    })
-}
+use com::packet::{Packet, self};
+use com::response::{Response, self};
 
 pub fn listen<F>(mut cbk: F) -> ()
 where
@@ -94,3 +72,26 @@ where
         }
     }
 }
+
+fn read_stream(stream: &mut TcpStream) -> Result<Vec<u8>, &str> {
+    let mut buf: [u8; 1024] = [0; 1024];
+
+    if let Ok(size) = stream.read(&mut buf) {
+        let ret = buf[0..size].to_vec();
+        log::trace!("received: {:?}", ret);
+        Ok(ret)
+    } else {
+        Err("failed recieved")
+    }
+}
+
+fn accept(listener: TcpListener) -> JoinHandle<(TcpStream, SocketAddr)> {
+    thread::spawn(move || match listener.accept() {
+        Ok((stream, address)) => (stream, address),
+        Err(err) => {
+            log::error!("listen error: {:?}", err);
+            panic!();
+        }
+    })
+}
+

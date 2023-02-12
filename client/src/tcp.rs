@@ -4,6 +4,8 @@ use std::{
     time::Duration,
 };
 
+use com::packet;
+
 use crate::command_args::{CommandOption, ToSocket};
 
 pub trait TcpClient {

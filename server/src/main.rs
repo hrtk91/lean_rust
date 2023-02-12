@@ -1,8 +1,8 @@
-use packet::Packet;
-use request::Request;
+use com::packet::Packet;
+use com::request::Request;
 use std::net::SocketAddr;
 
-mod tcp;
+mod tcp_server;
 
 pub struct App {
     requests: Vec<(SocketAddr, String)>,
@@ -26,7 +26,6 @@ impl App {
                 self.post(address, &content);
             }
             "/get" => {
-                let content = req.content;
                 self.get(address);
             }
             _ => (),
@@ -46,7 +45,9 @@ impl App {
     fn get(&mut self, address: SocketAddr) {
         log::trace!("[{:?}]", address);
 
-        let reversed = self.requests.reverse();
+        let mut requests = self.requests.clone();
+        requests.reverse();
+        let content = requests.iter().map(|x| format!("{}:{}", x.0.to_string(), x.1)).collect::<String>();
     }
 }
 
@@ -54,5 +55,8 @@ fn main() {
     env_logger::init();
     log::info!("listen started at 127.0.0.1:8080");
     let mut app = App { requests: vec![] };
-    tcp::listen(move |packet: Packet, address: SocketAddr| app.handle_receive(packet, address));
+    tcp_server::listen(move |packet: Packet, address: SocketAddr| {
+
+        app.handle_receive(packet, address)
+    });
 }

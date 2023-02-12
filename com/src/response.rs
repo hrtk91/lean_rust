@@ -1,12 +1,10 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Header {
-    pub path: String,
-}
+pub struct Header {}
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Request {
+pub struct Response {
     pub header: Header,
     pub content: String,
 }

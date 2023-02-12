@@ -1,3 +1,4 @@
+use com::{packet, response, request};
 use tcp::{Client, TcpClient};
 
 mod command_args;
