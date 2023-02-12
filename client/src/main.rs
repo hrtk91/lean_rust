@@ -1,8 +1,10 @@
+use std::io::Write;
+
 use com::{packet, response, request};
-use tcp::{Client, TcpClient};
+use tcp_client::{Client, TcpClient};
 
 mod command_args;
-mod tcp;
+mod tcp_client;
 
 fn main() {
     env_logger::init();
@@ -14,6 +16,8 @@ fn main() {
     let stdin = std::io::stdin();
     loop {
         let mut buf = String::from("");
+        print!("> ");
+        std::io::stdout().flush().unwrap();
         stdin.read_line(&mut buf).expect("failed to readline");
 
         post(&client, buf.into());
