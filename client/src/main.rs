@@ -20,14 +20,14 @@ fn main() {
         std::io::stdout().flush().unwrap();
         stdin.read_line(&mut buf).expect("failed to readline");
 
-        post(&client, buf.into());
+        post(&client, "/post", buf.into());
     }
 }
 
-fn post(client: &Client, value: String) -> bool {
+fn post(client: &Client, path: &str, value: String) -> bool {
     let req = request::Request {
         header: request::Header {
-            path: "/post".into(),
+            path: path.into(),
         },
         content: value,
     };
@@ -47,7 +47,6 @@ fn post(client: &Client, value: String) -> bool {
     let bytes = packet.to_vec();
     if let Some(packet) = client.send(&bytes) {
         let resp = serde_json::from_slice::<response::Response>(&packet.payload);
-        log::info!("{:?}", resp);
         if let Ok(resp) = resp {
             let array = resp
                 .content
