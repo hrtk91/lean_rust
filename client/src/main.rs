@@ -46,13 +46,15 @@ fn post(client: &Client, value: String) -> bool {
     };
     let bytes = packet.to_vec();
     if let Some(packet) = client.send(&bytes) {
-        let result = serde_json::from_slice::<response::Response>(&packet.payload);
-        if let Ok(resp) = result {
+        let resp = serde_json::from_slice::<response::Response>(&packet.payload);
+        log::info!("{:?}", resp);
+        if let Ok(resp) = resp {
             let array = resp
                 .content
                 .split("\n")
                 .into_iter()
                 .map(|x| format!("{:?}", x));
+
             for item in array {
                 log::info!("{:?}", item)
             }

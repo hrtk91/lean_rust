@@ -52,7 +52,13 @@ where
                     }
                 };
                 let resp = serde_json::to_vec(&resp).expect("failed parse response");
-                if let Err(err) = stream.write(&resp) {
+                let packet = packet::Packet {
+                    header: packet::Header {
+                        len: resp.len() as u32,
+                    },
+                    payload: resp
+                };
+                if let Err(err) = stream.write(&packet.to_vec()) {
                     log::warn!("failed wirte {:?}", err);
                 };
 
